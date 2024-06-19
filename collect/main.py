@@ -8,7 +8,7 @@ from multiprocessing import Process, Queue
 
 from binancefutures import BinanceFutures
 from binancefuturescoin import BinanceFuturesCoin
-from binance import Binance
+from binancespot import Binance
 
 queue = Queue()
 
