@@ -53,6 +53,7 @@ def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
     """
     获取最近 1 小时高振幅且高交易量的交易对
     """
+    logging.info('开始获取交易对信息...')
     tickers = client.get_ticker()
     usdt_pairs = [ticker for ticker in tickers if ticker['symbol'].endswith('USDT')]
     # 按照交易量排序后取前 100 条数据
@@ -92,6 +93,8 @@ def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
             print(f"Error processing {symbol}: {str(e)}")
     # 按振幅排序后取出振幅最高的三条数据
     sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:3]
+    if len(sorted_pairs) == 0:
+        logging.info('未找到符合条件的交易对.')
     return sorted_pairs
 
 
