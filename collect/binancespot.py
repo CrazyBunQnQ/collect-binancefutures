@@ -8,7 +8,7 @@ import aiohttp
 from aiohttp import ClientSession, WSMsgType
 from yarl import URL
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class Binance:
     def __init__(self, queue, symbols, timeout=7):
@@ -191,11 +191,12 @@ class Binance:
                                for symbol in self.symbols])
             # 构建 WebSocket URL url，格式为 wss://stream.binance.com:9443/stream?streams=%s。
             url = 'wss://stream.binance.com:9443/stream?streams=%s' % stream
+            logging.info('Connecting to %s' % url)
             # 创建一个异步会话 session
             async with ClientSession() as session:
                 # 建立 WebSocket 连接，返回的 WebSocket 连接对象为 ws
                 async with session.ws_connect(url) as ws:
-                    logging.info('WS Connected.')
+                    logging.info('%s WS Connected.' % self.symbols)
                     # 将 ws 赋值给实例变量 self.ws
                     self.ws = ws
                     # 创建一个异步任务 self.keep_alive 来保持连接的活跃，调用 self.__keep_alive() 方法。
@@ -243,6 +244,7 @@ class Binance:
         # 使用 /v3/depth 接口获取市场深度快照
         data = await self.__curl(verb='GET', path='/v3/depth', query={'symbol': symbol.upper(), 'limit': 1000})
         # 将获取到的市场深度数据放入队列 self.queue 中
+        logging.info('Get market depth snapshot. symbol=%s' % symbol)
         self.queue.put((symbol, time.time(), json.dumps(data)))
         # 提取 lastUpdateId，这是市场深度数据的最新更新 ID
         lastUpdateId = data['lastUpdateId']
