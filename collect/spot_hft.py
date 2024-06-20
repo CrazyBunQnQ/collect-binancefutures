@@ -38,7 +38,7 @@ def load_api_credentials(file_path):
 
 
 key_file_path = os.getenv('BINANCE_KEY_FILE_PATH', '/root/data/binanceKeys.json')
-logging.info(f'从 {key_file_path} 加载 API 密钥和机密')
+logging.info(f'从 {key_file_path} 加载 API 密钥')
 output_dir = os.getenv('DATA_SAVE_PATH', '/root/data')
 logging.info(f'数据保存路径: {output_dir}')
 """文件输出路径"""
@@ -84,10 +84,9 @@ def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
                 amplitude = round((high_price - low_price) / open_price * 100, 2)
                 """振幅计算公式：(最高价 - 最低价) / 开盘价 * 100%"""
                 # 筛选出交易量大于10000000且振幅大于5%的币种
-                if volume > min_volume and amplitude > min_amplitude and amplitude < 200:
-                    print('high_price: %s, low_price: %s, volume: %s, amplitude: %s' % (
-                        high_price, low_price, round(volume, 2), amplitude))
-                    #
+                if volume > min_volume and min_amplitude < amplitude < 200:
+                    print('%s - 最高价: %s, 最低价: %s, 交易量: %s, 振幅: %s' % (
+                        symbol, high_price, low_price, round(volume, 2), amplitude))
                     selected_symbols[symbol] = {'volume': volume, 'amplitude': amplitude, 'symbol': symbol}
         except Exception as e:
             print(f"Error processing {symbol}: {str(e)}")
@@ -114,7 +113,7 @@ def main():
     global current_processes
     while True:
         try:
-            active_symbols = get_high_amplitude_high_volume_tickers()
+            active_symbols = get_high_amplitude_high_volume_tickers()  # TODO 根据配置传入参数
             required_symbols = {item['symbol']: item for item in active_symbols}
             current_symbols = set(current_processes.keys())
 
