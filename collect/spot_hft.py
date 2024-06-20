@@ -37,11 +37,16 @@ def load_api_credentials(file_path):
     return config['binance_api_key'], config['binance_api_secret']
 
 
-api_key, api_secret = load_api_credentials('/training/Data/binanceKeys.json')
+key_file_path = os.getenv('BINANCE_KEY_FILE_PATH', '/root/data/binanceKeys.json')
+logging.info(f'从 {key_file_path} 加载 API 密钥和机密')
+output_dir = os.getenv('DATA_SAVE_PATH', '/root/data')
+logging.info(f'数据保存路径: {output_dir}')
+"""文件输出路径"""
+
+api_key, api_secret = load_api_credentials(key_file_path)
 client = Client(api_key, api_secret)
 queue = Queue()
 current_processes = {}
-output_dir = '/root/test'
 
 
 def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
@@ -123,14 +128,14 @@ def main():
                 proc = current_processes.pop(symbol)
                 proc.terminate()
                 proc.join()  # Ensure the process has exited before continuing.
-                logging.info(f'Stopped collecting for {symbol}.')
+                logging.info(f'停止采集 {symbol} 的进程.')
 
             # 启动新的采集进程
             for symbol in to_start:
                 p = Process(target=start_collecting, args=(symbol, queue, output_dir))
                 p.start()
                 current_processes[symbol] = p
-                logging.info(f'Started collecting for {symbol}.')
+                logging.info(f'启动采集 {symbol} 的进程.')
 
         except Exception as e:
             logging.error(f"Error in main loop: {str(e)}")
@@ -140,10 +145,9 @@ def main():
 
 def start_collecting(symbol, queue, output):
     """启动针对特定交易对的数据采集进程"""
-    logging.info(f'Starting collection for {symbol}')
+    logging.info(f'开始收集 {symbol}')
     asyncio.set_event_loop(asyncio.new_event_loop())  # Set up a new event loop for the child process
     loop = asyncio.get_event_loop()
-    # symbol 转为小写
     binance_collector = Binance(queue, [symbol.lower()])
     loop.run_until_complete(binance_collector.connect())
     loop.close()

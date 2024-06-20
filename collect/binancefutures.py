@@ -8,6 +8,7 @@ import aiohttp
 from aiohttp import ClientSession, WSMsgType
 from yarl import URL
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class BinanceFutures:
     def __init__(self, queue, symbols, timeout=7):
