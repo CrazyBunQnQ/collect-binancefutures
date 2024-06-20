@@ -141,9 +141,12 @@ def main():
 def start_collecting(symbol, queue, output):
     """启动针对特定交易对的数据采集进程"""
     logging.info(f'Starting collection for {symbol}')
+    asyncio.set_event_loop(asyncio.new_event_loop())  # Set up a new event loop for the child process
+    loop = asyncio.get_event_loop()
     # symbol 转为小写
     binance_collector = Binance(queue, [symbol.lower()])
-    asyncio.run(binance_collector.connect())
+    loop.run_until_complete(binance_collector.connect())
+    loop.close()
 
 
 if __name__ == "__main__":
