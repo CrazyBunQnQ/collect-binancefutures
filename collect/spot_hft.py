@@ -86,15 +86,17 @@ def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
                 """振幅计算公式：(最高价 - 最低价) / 开盘价 * 100%"""
                 # 筛选出交易量大于10000000且振幅大于5%的币种
                 if volume > min_volume and min_amplitude < amplitude < 200:
-                    print('%s - 最高价: %s, 最低价: %s, 交易量: %s, 振幅: %s' % (
+                    logging.info('%s - 最高价: %s, 最低价: %s, 交易量: %s, 振幅: %s' % (
                         symbol, high_price, low_price, round(volume, 2), amplitude))
                     selected_symbols[symbol] = {'volume': volume, 'amplitude': amplitude, 'symbol': symbol}
         except Exception as e:
-            print(f"Error processing {symbol}: {str(e)}")
+            logging.error(f"Error processing {symbol}: {str(e)}")
     # 按振幅排序后取出振幅最高的三条数据
     sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:3]
     if len(sorted_pairs) == 0:
         logging.info('未找到符合条件的交易对.')
+    else:
+        logging.info('找到符合条件的交易对: %s' % ', '.join([item['symbol'] for item in sorted_pairs]))
     return sorted_pairs
 
 
