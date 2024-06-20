@@ -8,6 +8,8 @@ from multiprocessing import Process, Queue
 
 from binancespot import Binance
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 queue = Queue()
 stream = None
 writer_p = None
@@ -28,7 +30,9 @@ def writer_proc(queue, output):
 
 
 def shutdown():
-    asyncio.create_task(stream.close())
+    logging.info("Shutting down the collector...")
+    asyncio.create_task(stream.close())  # 关闭 WebSocket 连接
+    shutdown_event.set()  # 设置关闭事件
 
 
 shutdown_event = Event()
@@ -36,7 +40,6 @@ shutdown_event = Event()
 
 async def run_collector(symbols, output):
     global stream, writer_p, shutdown_event
-    logging.basicConfig(level=logging.DEBUG)
     stream = Binance(queue, symbols)
     writer_p = Process(target=writer_proc, args=(queue, output,))
     writer_p.start()
@@ -49,6 +52,7 @@ async def run_collector(symbols, output):
         writer_p.join()
         if not stream.closed:
             await stream.close()
+        shutdown_event.clear()  # 重置关闭事件
 
 
 def start_collector(symbols, output):

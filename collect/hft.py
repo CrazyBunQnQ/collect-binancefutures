@@ -9,7 +9,7 @@ import time
 
 from binance.client import Client  # pip install python-binance
 
-from spot_hft import start_collector, run_collector, stream
+from spot_hft import start_collector, run_collector, shutdown_event
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -38,7 +38,7 @@ def load_api_credentials(file_path):
     return config['binance_api_key'], config['binance_api_secret']
 
 
-def get_high_amplitude_high_volume_tickers(min_volume=10000000, min_amplitude=5):
+def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
     """
     获取最近 1 小时高振幅且高交易量的交易对
     """
@@ -137,10 +137,7 @@ def start_collector(symbols, output):
 
 def shutdown_collector():
     """关闭 collector 线程"""
-    logging.info('需要关闭的流: %s' % stream)
-    if stream is not None:
-        logging.info('关闭流...')
-        asyncio.create_task(stream.close())  # 异步关闭流
+    shutdown_event.set()
 
 
 # 管理 collector 线程和关闭事件
@@ -155,6 +152,7 @@ def manage_collector(symbols):
         logging.info('关闭当前采集线程...')
         shutdown_collector()  # 通过事件通知子线程关闭
         collector_thread.join()  # 等待线程完全停止
+        collector_thread = None  # 重要：清除旧的线程对象引用
         logging.info('当前采集线程已成功停止')
 
     if len(symbols) > 0:
@@ -168,6 +166,8 @@ def manage_collector(symbols):
 def handle_signals(signal_num, frame):
     """处理信号，关闭 collector 线程并退出"""
     shutdown_collector()
+    if collector_thread is not None:
+        collector_thread.join()
     sys.exit(0)  # 确保主进程也会退出
 
 
