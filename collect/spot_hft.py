@@ -49,7 +49,7 @@ queue = Queue()
 current_processes = {}
 
 
-def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
+def get_high_amplitude_high_volume_tickers(min_volume=10000000, min_amplitude=5):
     """
     获取最近 1 小时高振幅且高交易量的交易对
     """
@@ -90,7 +90,7 @@ def get_high_amplitude_high_volume_tickers(min_volume=8000000, min_amplitude=5):
                         symbol, high_price, low_price, round(volume, 2), amplitude))
                     selected_symbols[symbol] = {'volume': volume, 'amplitude': amplitude, 'symbol': symbol}
         except Exception as e:
-            logging.error(f"Error processing {symbol}: {str(e)}")
+            logging.error(f"错误处理 {symbol}: {str(e)}")
     # 按振幅排序后取出振幅最高的三条数据
     sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:3]
     if len(sorted_pairs) == 0:
@@ -119,6 +119,11 @@ def main():
     while True:
         try:
             active_symbols = get_high_amplitude_high_volume_tickers()  # TODO 根据配置传入参数
+        except Exception as e:
+            logging.error(f"获取交易对信息出错: {str(e)}. 1 分钟后重试")
+            time.sleep(60)
+            continue
+        try:
             required_symbols = {item['symbol']: item for item in active_symbols}
             current_symbols = set(current_processes.keys())
 
@@ -142,7 +147,7 @@ def main():
                 logging.info(f'启动采集 {symbol} 的进程.')
 
         except Exception as e:
-            logging.error(f"Error in main loop: {str(e)}")
+            logging.error(f"主循环出错: {str(e)}")
 
         time.sleep(1800)
 
