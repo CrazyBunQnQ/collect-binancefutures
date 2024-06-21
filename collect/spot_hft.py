@@ -42,6 +42,11 @@ logging.info(f'从 {key_file_path} 加载 API 密钥')
 output_dir = os.getenv('DATA_SAVE_PATH', '/root/data')
 logging.info(f'数据保存路径: {output_dir}')
 """文件输出路径"""
+volume_threshold = float(os.getenv('MIN_VOLUME', '10000000'))
+"""最低交易额阈值"""
+amplitude_threshold = float(os.getenv('MIN_AMPLITUDE', '5'))
+"""最低振幅阈值"""
+logging.info(f'最低交易额阈值: {volume_threshold}, 最低振幅阈值: {amplitude_threshold}%')
 
 api_key, api_secret = load_api_credentials(key_file_path)
 client = Client(api_key, api_secret)
@@ -49,7 +54,7 @@ queue = Queue()
 current_processes = {}
 
 
-def get_high_amplitude_high_volume_tickers(min_volume=10000000, min_amplitude=5):
+def get_high_amplitude_high_volume_tickers(min_volume=15000000, min_amplitude=5):
     """
     获取最近 1 小时高振幅且高交易量的交易对
     """
@@ -73,14 +78,14 @@ def get_high_amplitude_high_volume_tickers(min_volume=10000000, min_amplitude=5)
                 open_price = float(klines[0][1])
                 if open_price == 0:
                     continue
-                # 计算1小时的最高价、最低价、总交易量
+                # 计算1小时的最高价、最低价、总交易量(usdt交易量而不是币交易量)
                 high_price = float(klines[0][2])
                 low_price = float(klines[0][3])
-                volume = float(klines[0][5])
+                volume = float(klines[0][7])
                 for kline in klines[1:]:
                     high_price = max(high_price, float(kline[2]))
                     low_price = min(low_price, float(kline[3]))
-                    volume += float(kline[5])
+                    volume += float(kline[7])
                 # 计算振幅并保留 2 位小数
                 amplitude = round((high_price - low_price) / open_price * 100, 2)
                 """振幅计算公式：(最高价 - 最低价) / 开盘价 * 100%"""
@@ -118,10 +123,10 @@ def main():
     global current_processes
     while True:
         try:
-            active_symbols = get_high_amplitude_high_volume_tickers()  # TODO 根据配置传入参数
+            active_symbols = get_high_amplitude_high_volume_tickers(volume_threshold, amplitude_threshold)
         except Exception as e:
-            logging.error(f"获取交易对信息出错: {str(e)}. 1 分钟后重试")
-            time.sleep(60)
+            logging.error(f"获取交易对信息出错: {str(e)}. 5 秒后重试")
+            time.sleep(5)
             continue
         try:
             required_symbols = {item['symbol']: item for item in active_symbols}
