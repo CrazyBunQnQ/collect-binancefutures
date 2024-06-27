@@ -112,6 +112,8 @@ def writer_proc(queue, output):
             break
         symbol, timestamp, message = data
         date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y%m%d')
+        if data.contains('bids'):
+            logging.warning("write depth snapshot %s: %s" % (symbol, message))
         with open(os.path.join(output, '%s_%s.dat' % (symbol, date)), 'a') as f:
             f.write(str(int(timestamp * 1000000)))
             f.write(' ')

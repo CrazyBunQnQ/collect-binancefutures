@@ -244,7 +244,7 @@ class Binance:
         # 使用 /v3/depth 接口获取市场深度快照
         data = await self.__curl(verb='GET', path='/v3/depth', query={'symbol': symbol.upper(), 'limit': 1000})
         # 将获取到的市场深度数据放入队列 self.queue 中
-        logging.info('Get market depth snapshot. symbol=%s' % symbol)
+        logging.info('Get market depth snapshot. symbol=%s %s' % (symbol, json.dumps(data)))
         self.queue.put((symbol, time.time(), json.dumps(data)))
         # 提取 lastUpdateId，这是市场深度数据的最新更新 ID
         lastUpdateId = data['lastUpdateId']
