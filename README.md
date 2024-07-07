@@ -17,7 +17,7 @@ example: `collect.sh binancefuturescoin btcusd_perp /mnt/data`
 **AWS tokyo region is recommended to minimize latency.**
 
 
-# Converter: feed data to Pandas Dataframe pickle file
+# Converter: 将数据提供给 Pandas Dataframe pickle 文件
 ## Requirements
 Python3: run by `python3` command.  
 pandas: `pip3 install pandas`
@@ -26,13 +26,13 @@ pandas: `pip3 install pandas`
 `convert.sh [-s INITIAL_MARKET_DEPTH_SNAPSHOT] [-f] [-c] src_file dst_path
 
 option:  
-with -f: including mark price, funding, book ticker streams  
-without -f: only market depth and trade streams  
-with -c: correct exchange timestamp to be monotonically increased  
+with -f: 包括 mark price, funding, book ticker streams  
+without -f: 仅市场深度和 trade 流  
+with -c: 正确的交易时间戳单调增加  
   
 example:  
 `convert.sh /mnt/data/btcusdt_20220811.dat /mnt/data`  
 or with the initial market depth snapshot  
 `convert.sh /mnt/data/btcusdt_20220811.dat /mnt/data -s /mnt/data/btcusdt_20220810.snapshot.pkl`
   
-`/mnt/data/btcusdt_20220810.snapshot.pkl` is End-Of-Day market depth snapshot of 20220810 so it's initial market depth snapshot of 20220811.  
+`/mnt/data/btcusdt_20220810.snapshot.pkl` 是 20220810 的日终市场深度快照，因此它是 20220811 的初始市场深度快照。  

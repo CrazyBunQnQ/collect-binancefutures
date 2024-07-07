@@ -7,10 +7,12 @@ import pandas as pd
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('src_file')
-    parser.add_argument('dst_path')
+    # parser.add_argument('-e', '--engine', help='translation engine (OpenAI, LibreTranslate)', default='OpenAI',
+    #                 action='store', required=False)
+    parser.add_argument('-i', '--src_file', default='F:\下载\zrousdt_20240701.dat', required=False)
+    parser.add_argument('-o', '--dst_path', default='F:\下载', required=False)
     parser.add_argument('-s', '--snapshot')
-    parser.add_argument('-f', '--full', action='store_true')
+    parser.add_argument('-f', '--full', action='store_true', default=True)
     parser.add_argument('-c', '--correct', action='store_true')
 
     args = parser.parse_args()
@@ -52,10 +54,13 @@ if __name__ == '__main__':
             message = json.loads(line[17:])
             data = message.get('data')
             if data is not None:
-                evt = data['e']
+                if 'e' in data:
+                    evt = data['e']
+                else:
+                    evt = message['stream'].split('@')[1]
                 if evt == 'trade':
-                    # event_time = data['E']
-                    transaction_time = data['T']
+                    # transaction_time = data['T']
+                    transaction_time = data['E']
                     price = data['p']
                     qty = data['q']
                     side = -1 if data['m'] else 1  # trade initiator's side
@@ -65,8 +70,8 @@ if __name__ == '__main__':
                     prev_exch_timestamp = exch_timestamp
                     rows.append([2, exch_timestamp, local_timestamp, side, float(price), float(qty)])
                 elif evt == 'depthUpdate':
-                    # event_time = data['E']
-                    transaction_time = data['T']
+                    # transaction_time = data['T']
+                    transaction_time = data['E']
                     bids = data['b']
                     asks = data['a']
                     exch_timestamp = int(transaction_time) * 1000
@@ -88,8 +93,8 @@ if __name__ == '__main__':
                         else:
                             ask_depth[ask[0]] = ask[1]
                 elif evt == 'markPriceUpdate' and args.full:
-                    # event_time = data['E']
-                    transaction_time = data['T']
+                    # transaction_time = data['T']
+                    transaction_time = data['E']
                     index = data['i']
                     mark_price = data['p']
                     # est_settle_price = data['P']
@@ -98,13 +103,15 @@ if __name__ == '__main__':
                     rows.append([101, prev_exch_timestamp, local_timestamp, 0, float(mark_price), 0])
                     rows.append([102, prev_exch_timestamp, local_timestamp, 0, float(funding_rate), 0])
                 elif evt == 'bookTicker' and args.full:
-                    # event_time = data['E']
-                    transaction_time = data['T']
+                    if 'T' in message:
+                        transaction_time = message['T']
+                        exch_timestamp = int(transaction_time) * 1000
+                    else:
+                        exch_timestamp = local_timestamp
                     bid_price = data['b']
                     bid_qty = data['B']
                     ask_price = data['a']
                     ask_qty = data['A']
-                    exch_timestamp = int(transaction_time) * 1000
                     if correct_exch_timestamp and exch_timestamp < prev_exch_timestamp:
                         exch_timestamp = prev_exch_timestamp
                     prev_exch_timestamp = exch_timestamp
@@ -113,12 +120,16 @@ if __name__ == '__main__':
             else:
                 # snapshot
                 # event_time = msg['E']
-                transaction_time = message['T']
+                # 判断 message['T'] 是否存在
+                if 'T' in message:
+                    transaction_time = message['T']
+                    exch_timestamp = int(transaction_time) * 1000
+                else:
+                    exch_timestamp = local_timestamp
                 bids = message['bids']
                 asks = message['asks']
                 bid_clear_upto = float(bids[-1][0])
                 ask_clear_upto = float(asks[-1][0])
-                exch_timestamp = int(transaction_time) * 1000
                 if correct_exch_timestamp and exch_timestamp < prev_exch_timestamp:
                     exch_timestamp = prev_exch_timestamp
                 prev_exch_timestamp = exch_timestamp
