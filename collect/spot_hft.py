@@ -97,7 +97,7 @@ def get_high_amplitude_high_volume_tickers(min_volume=15000000, min_amplitude=5)
         except Exception as e:
             logging.error(f"错误处理 {symbol}: {str(e)}")
     # 按振幅排序后取出振幅最高的三条数据
-    sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:3]
+    sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:4]
     if len(sorted_pairs) == 0:
         logging.info('未找到符合条件的交易对.')
     else:
