@@ -58,15 +58,95 @@ class Binance:
                 self.prev_u[symbol] = u
         # 对于 aggTrade（聚合交易）、trade（交易）、bookTicker（订单簿价格）、markPrice（标记价格）等其他消息类型，直接将消息加入队列 self.queue
         elif tokens[1] == 'aggTrade':
+            # {
+            #   "e": "aggTrade",      // 事件类型
+            #   "E": 1672515782136,   // 事件时间
+            #   "s": "BNBBTC",        // 交易对
+            #   "a": 12345,           // 归集交易ID
+            #   "p": "0.001",         // 成交价格
+            #   "q": "100",           // 成交数量
+            #   "f": 100,             // 被归集的首个交易ID
+            #   "l": 105,             // 被归集的末次交易ID
+            #   "T": 1672515782136,   // 成交时间
+            #   "m": true,            // 买方是否是做市方。如true，则此次成交是一个主动卖出单，否则是一个主动买入单。
+            #   "M": true             // 请忽略该字段
+            # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
         elif tokens[1] == 'trade':
+            # {
+            #   "e": "trade",        // 事件类型
+            #   "E": 1672515782136,  // 事件时间
+            #   "s": "BNBBTC",       // 交易对
+            #   "t": 12345,          // 交易ID
+            #   "p": "0.001",        // 成交价格
+            #   "q": "100",          // 成交数量
+            #   "T": 1672515782136,  // 成交时间
+            #   "m": true,           // 买方是否是做市方。如true，则此次成交是一个主动卖出单，否则是一个主动买入单。
+            #   "M": true            // 请忽略该字段
+            # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
         elif tokens[1] == 'bookTicker':
+            # 最优挂单信息
+            # {
+            #   "u":400900217,     // order book updateId
+            #   "s":"BNBUSDT",     // 交易对
+            #   "b":"25.35190000", // 买单最优挂单价格
+            #   "B":"31.21000000", // 买单最优挂单数量
+            #   "a":"25.36520000", // 卖单最优挂单价格
+            #   "A":"40.66000000"  // 卖单最优挂单数量
+            # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
         elif tokens[1] == 'markPrice':
+            symbol = tokens[0]
+            self.queue.put((symbol, timestamp, raw_message))
+        elif tokens[1] == 'kline_1m':
+            # {
+            #   "e": "kline",          // 事件类型
+            #   "E": 1672515782136,    // 事件时间
+            #   "s": "BNBBTC",         // 交易对
+            #   "k": {
+            #     "t": 1672515780000,  // 这根K线的起始时间
+            #     "T": 1672515839999,  // 这根K线的结束时间
+            #     "s": "BNBBTC",       // 交易对
+            #     "i": "1m",           // K线间隔
+            #     "f": 100,            // 这根K线期间第一笔成交ID
+            #     "L": 200,            // 这根K线期间末一笔成交ID
+            #     "o": "0.0010",       // 这根K线期间第一笔成交价
+            #     "c": "0.0020",       // 这根K线期间末一笔成交价
+            #     "h": "0.0025",       // 这根K线期间最高成交价
+            #     "l": "0.0015",       // 这根K线期间最低成交价
+            #     "v": "1000",         // 这根K线期间成交量
+            #     "n": 100,            // 这根K线期间成交数量
+            #     "x": false,          // 这根K线是否完结（是否已经开始下一根K线）
+            #     "q": "1.0000",       // 这根K线期间成交额
+            #     "V": "500",          // 主动买入的成交量
+            #     "Q": "0.500",        // 主动买入的成交额
+            #     "B": "123456"        // 忽略此参数
+            #   }
+            # }
+            symbol = tokens[0]
+            self.queue.put((symbol, timestamp, raw_message))
+        elif tokens[1] == 'depth10':
+            # {
+            #   "lastUpdateId": 160,  // 末次更新ID
+            #   "bids": [             // 买单
+            #     [
+            #       "0.0024",         // 价
+            #       "10",             // 量
+            #       []                // 忽略
+            #     ]
+            #   ],
+            #   "asks": [             // 卖单
+            #     [
+            #       "0.0026",         // 价
+            #       "100",            // 量
+            #       []                // 忽略
+            #     ]
+            #   ]
+            # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
 
@@ -187,7 +267,7 @@ class Binance:
         '''
         try:
             # 构建 stream 字符串，包含所有需要订阅的流（深度数据、交易数据和订单簿价格数据）。
-            stream = '/'.join(['%s@depth@1000ms/%s@trade/%s@bookTicker' % (symbol, symbol, symbol)
+            stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h' % (symbol, symbol, symbol, symbol, symbol)
                                for symbol in self.symbols])
             # 构建 WebSocket URL url，格式为 wss://stream.binance.com:9443/stream?streams=%s。
             url = 'wss://stream.binance.com:9443/stream?streams=%s' % stream
