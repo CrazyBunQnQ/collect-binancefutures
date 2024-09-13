@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class Binance:
     def __init__(self, queue, symbols, timeout=7):
         self.symbols = symbols
-        self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
+        self.client = None
         self.closed = False
         self.pending_messages = {}
         self.prev_u = {}
@@ -208,6 +208,7 @@ class Binance:
         try:
             url = URL('https://api.binance.com/api%s?%s' % (path, query), encoded=True)
             logging.info("sending req to %s: %s" % (url, json.dumps(query or query or '')))
+            self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
             response = await self.client.request(verb, url, timeout=timeout)
             # Make non-200s throw
             response.raise_for_status()
@@ -266,6 +267,7 @@ class Binance:
         包括异常处理和清理资源的机制，确保在发生错误或断开连接时能正确处理。
         '''
         try:
+            self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
             # 构建 stream 字符串，包含所有需要订阅的流（深度数据、交易数据和订单簿价格数据）。
             stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h' % (symbol, symbol, symbol, symbol, symbol)
                                for symbol in self.symbols])
@@ -313,8 +315,10 @@ class Binance:
         设置 self.closed 标志、关闭 WebSocket 连接和 aiohttp 客户端会话，以及异步等待一段时间，来实现关闭连接和清理资源的操作。
         '''
         self.closed = True
-        await self.ws.close()
-        await self.client.close()
+        if self.ws:
+            await self.ws.close()
+        if self.client:
+            await self.client.close()
         await asyncio.sleep(1)
 
     async def __get_marketdepth_snapshot(self, symbol):
