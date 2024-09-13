@@ -10,10 +10,11 @@ from yarl import URL
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 class Binance:
     def __init__(self, queue, symbols, timeout=7):
         self.symbols = symbols
-        self.client = None
+        self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
         self.closed = False
         self.pending_messages = {}
         self.prev_u = {}
@@ -190,6 +191,7 @@ class Binance:
             query = {}
         # query['timestamp'] = str(int(time.time() * 1000) - 1000)
         query = urllib.parse.urlencode(query)
+
         # query = query.replace('%27', '%22')
 
         def exit_or_throw(e):
@@ -208,7 +210,6 @@ class Binance:
         try:
             url = URL('https://api.binance.com/api%s?%s' % (path, query), encoded=True)
             logging.info("sending req to %s: %s" % (url, json.dumps(query or query or '')))
-            self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
             response = await self.client.request(verb, url, timeout=timeout)
             # Make non-200s throw
             response.raise_for_status()
@@ -219,7 +220,7 @@ class Binance:
                 logging.error("Ratelimited on current request. Sleeping, then trying again. Try fewer " + "Request: %s \n %s" % (url, json.dumps(query)))
                 logging.warning("Canceling all known orders in the meantime.")
 
-                #logging.error("Your ratelimit will reset at %s. Sleeping for %d seconds." % (reset_str, to_sleep))
+                # logging.error("Your ratelimit will reset at %s. Sleeping for %d seconds." % (reset_str, to_sleep))
                 to_sleep = 5
                 logging.error("Sleeping for %d seconds." % (to_sleep))
                 time.sleep(to_sleep)
@@ -267,7 +268,6 @@ class Binance:
         包括异常处理和清理资源的机制，确保在发生错误或断开连接时能正确处理。
         '''
         try:
-            self.client = aiohttp.ClientSession(headers={ 'Content-Type': 'application/json' })
             # 构建 stream 字符串，包含所有需要订阅的流（深度数据、交易数据和订单簿价格数据）。
             stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h' % (symbol, symbol, symbol, symbol, symbol)
                                for symbol in self.symbols])
