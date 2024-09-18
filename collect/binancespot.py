@@ -130,7 +130,7 @@ class Binance:
             # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
-        elif tokens[1] == 'depth10':
+        elif tokens[1] == 'depth20':
             # {
             #   "lastUpdateId": 160,  // 末次更新ID
             #   "bids": [             // 买单
@@ -269,7 +269,7 @@ class Binance:
         '''
         try:
             # 构建 stream 字符串，包含所有需要订阅的流（深度数据、交易数据和订单簿价格数据）。
-            stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h' % (symbol, symbol, symbol, symbol, symbol)
+            stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h/%s@depth20@1000ms' % (symbol, symbol, symbol, symbol, symbol, symbol)
                                for symbol in self.symbols])
             # 构建 WebSocket URL url，格式为 wss://stream.binance.com:9443/stream?streams=%s。
             url = 'wss://stream.binance.com:9443/stream?streams=%s' % stream
