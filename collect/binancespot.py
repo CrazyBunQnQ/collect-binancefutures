@@ -130,6 +130,29 @@ class Binance:
             # }
             symbol = tokens[0]
             self.queue.put((symbol, timestamp, raw_message))
+        elif tokens[1] == 'ticker_1h':
+            # 滚动窗口统计
+            # {
+            #   "e": "1hTicker",    // 事件类型
+            #   "E": 1672515782136, // 事件时间
+            #   "s": "BNBBTC",      // 交易对
+            #   "p": "0.0015",      // 价格变化
+            #   "P": "250.00",      // 价格变化百分比
+            #   "o": "0.0010",      // 开盘价
+            #   "h": "0.0025",      // 最高价
+            #   "l": "0.0010",      // 最低价
+            #   "c": "0.0025",      // 最后价格
+            #   "w": "0.0018",      // 加权平均价
+            #   "v": "10000",       // 基础资产总交易量
+            #   "q": "18",          // 报价资产总交易量
+            #   "O": 0,             // 统计开放时间
+            #   "C": 86400000,      // 统计关闭时间
+            #   "F": 0,             // 第一个交易ID
+            #   "L": 18150,         // 最后交易 ID
+            #   "n": 18151          // 交易总数
+            # }
+            symbol = tokens[0]
+            self.queue.put((symbol, timestamp, raw_message))
         elif tokens[1] == 'depth20':
             # {
             #   "lastUpdateId": 160,  // 末次更新ID
@@ -269,7 +292,7 @@ class Binance:
         '''
         try:
             # 构建 stream 字符串，包含所有需要订阅的流（深度数据、交易数据和订单簿价格数据）。
-            stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_4h/%s@depth20@1000ms' % (symbol, symbol, symbol, symbol, symbol, symbol)
+            stream = '/'.join(['%s@depth@1000ms/%s@aggTrade/%s@bookTicker/%s@kline_1m/%s@ticker_1h/%s@depth20@1000ms' % (symbol, symbol, symbol, symbol, symbol, symbol)
                                for symbol in self.symbols])
             # 构建 WebSocket URL url，格式为 wss://stream.binance.com:9443/stream?streams=%s。
             url = 'wss://stream.binance.com:9443/stream?streams=%s' % stream
