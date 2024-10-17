@@ -96,14 +96,14 @@ def get_high_amplitude_high_volume_tickers(min_volume=15000000, min_amplitude=5)
                     selected_symbols[symbol] = {'volume': volume, 'amplitude': amplitude, 'symbol': symbol}
         except Exception as e:
             logging.error(f"错误处理 {symbol}: {str(e)}")
-    # 按振幅排序后取出振幅最高的4条数据
+    # 按振幅排序后取出振幅最高的3条数据
     sorted_pairs = sorted(selected_symbols.values(), key=lambda x: x['amplitude'], reverse=True)[:4]
     if len(sorted_pairs) == 0:
         logging.info('未找到符合条件的交易对.')
     else:
         logging.info('找到符合条件的交易对: %s' % ', '.join([item['symbol'] for item in sorted_pairs]))
     # 如果数量小于 4 且不包含 BNBUSDT 则添加 BNBUSDT
-    if len(sorted_pairs) < 4 and 'BNBUSDT' not in selected_symbols:
+    if len(sorted_pairs) < 3 and 'BNBUSDT' not in selected_symbols:
         sorted_pairs.append(selected_symbols['BNBUSDT'])
     return sorted_pairs
 
