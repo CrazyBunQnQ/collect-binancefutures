@@ -103,8 +103,8 @@ def get_high_amplitude_high_volume_tickers(min_volume=15000000, min_amplitude=5)
     else:
         logging.info('找到符合条件的交易对: %s' % ', '.join([item['symbol'] for item in sorted_pairs]))
     # 如果数量小于 4 且不包含 BNBUSDT 则添加 BNBUSDT
-    if len(sorted_pairs) < 3 and 'BNBUSDT' not in selected_symbols:
-        sorted_pairs.append(selected_symbols['BNBUSDT'])
+    if len(sorted_pairs) < 3 and 'bnbusdt' not in selected_symbols:
+        sorted_pairs.append(selected_symbols['bnbusdt'])
     return sorted_pairs
 
 
